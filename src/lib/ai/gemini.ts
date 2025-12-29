@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from 'fs/promises';
 import path from 'path';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// genAI will be initialized inside the function to ensure latest API Key is used
 
 export async function getPrompt(filename: string) {
     try {
@@ -15,7 +15,7 @@ export async function getPrompt(filename: string) {
     }
 }
 
-const VERSION = "V1.0.8-STABLE";
+const VERSION = "V1.0.9-HOTFIX";
 
 export async function generateLanguageContent(promptName: string, variables: Record<string, string>) {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -23,6 +23,8 @@ export async function generateLanguageContent(promptName: string, variables: Rec
     if (!apiKey) {
         throw new Error(`[${VERSION}] Error: GEMINI_API_KEY is missing. Please add it to Vercel Environment Variables.`);
     }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
 
     const modelsToTry = [
         "gemini-1.5-flash",
