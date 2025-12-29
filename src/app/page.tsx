@@ -15,7 +15,7 @@ export default function Home() {
       }} className="animate-fade-in">
         <div className="glass" style={{ padding: '8px 20px', marginBottom: '20px', fontSize: '14px', fontWeight: '500', display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span>🚀 ยกระดับการเรียนภาษาด้วย AI</span>
-          <span style={{ fontSize: '10px', opacity: 0.5 }}>[BUILD: V1.0.9]</span>
+          <span style={{ fontSize: '10px', opacity: 0.5 }}>[BUILD: V1.1.0]</span>
         </div>
         <h1 style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', fontWeight: '700', lineHeight: '1.1' }}>
           <span className="title-gradient">AI Language learning</span><br />

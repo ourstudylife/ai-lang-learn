@@ -15,7 +15,7 @@ export async function getPrompt(filename: string) {
     }
 }
 
-const VERSION = "V1.0.9-HOTFIX";
+const VERSION = "V1.1.0-ULTIMATE-SYNC";
 
 export async function generateLanguageContent(promptName: string, variables: Record<string, string>) {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -27,9 +27,13 @@ export async function generateLanguageContent(promptName: string, variables: Rec
     const genAI = new GoogleGenerativeAI(apiKey);
 
     const modelsToTry = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro"
+        { name: "gemini-1.5-flash", version: "v1" },
+        { name: "gemini-1.5-flash", version: "v1beta" },
+        { name: "gemini-1.5-flash-latest", version: "v1" },
+        { name: "gemini-1.5-pro", version: "v1" },
+        { name: "gemini-1.5-pro", version: "v1beta" },
+        { name: "gemini-pro", version: "v1beta" },
+        { name: "gemini-1.0-pro", version: "v1" }
     ];
 
     let lastError = null;
@@ -50,14 +54,13 @@ export async function generateLanguageContent(promptName: string, variables: Rec
 
     const combinedPrompt = `${systemPrompt}\n\n${targetPrompt}`;
 
-    for (const modelName of modelsToTry) {
+    for (const config of modelsToTry) {
         try {
-            console.log(`[${VERSION}] Trying ${modelName} with API v1...`);
+            console.log(`[${VERSION}] Attempting ${config.name} on ${config.version}...`);
 
-            // FORCING v1 API which is the stable production version
             const model = genAI.getGenerativeModel(
-                { model: modelName },
-                { apiVersion: 'v1' }
+                { model: config.name },
+                { apiVersion: config.version }
             );
 
             const result = await model.generateContent(combinedPrompt);
@@ -74,7 +77,7 @@ export async function generateLanguageContent(promptName: string, variables: Rec
             return JSON.parse(cleanJson.trim());
 
         } catch (error: any) {
-            console.error(`[${VERSION}] ${modelName} Error:`, error.message);
+            console.error(`[${VERSION}] ${config.name} (${config.version}) Error:`, error.message);
             lastError = error;
 
             // If it's a 404, we continue. If it's 401/429, we stop.
@@ -84,5 +87,5 @@ export async function generateLanguageContent(promptName: string, variables: Rec
         }
     }
 
-    throw new Error(`[${VERSION}] AI 404: ไม่พบรุ่นที่รองรับ. สาเหตุส่วนใหญ่คือ API Key ไม่ถูกต้อง หรือภูมิภาคเซิร์ฟเวอร์ยังไม่เปิดให้ใช้รุ่นนี้. ข้อความจาก Google: ${lastError?.message}`);
+    throw new Error(`[${VERSION}] AI ยังไม่พร้อมใช้งาน: ขอแนะนำให้คุณลอง "สร้าง API KEY ใหม่ในโปรเจกต์ใหม่" จาก AI Studio ครับ. (Error: ${lastError?.message})`);
 }
