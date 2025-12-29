@@ -15,29 +15,33 @@ export async function getPrompt(filename: string) {
     }
 }
 
-const VERSION = "V1.0.6-FINAL-LLM";
+const VERSION = "V1.0.7-ULTIMATE";
 
 export async function generateLanguageContent(promptName: string, variables: Record<string, string>) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        throw new Error(`[${VERSION}] Error: GEMINI_API_KEY is missing in Vercel.`);
+        throw new Error(`[${VERSION}] Error: GEMINI_API_KEY is missing. Please add it to Vercel Environment Variables.`);
     }
 
-    // Comprehensive list of models to try
     const modelsToTry = [
         "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
         "gemini-1.5-pro",
-        "gemini-pro",
-        "gemini-1.0-pro" // Most compatible legacy model
+        "gemini-pro"
     ];
 
     let lastError = null;
 
+    // Verify prompts can be read
     const systemPrompt = await getPrompt('00_system_core.txt');
-    let targetPrompt = await getPrompt(promptName);
+    const targetPromptFile = await getPrompt(promptName);
 
+    if (!systemPrompt || !targetPromptFile) {
+        console.error(`[${VERSION}] Failed to read prompts. Check if 'prompts' folder exists in root.`);
+        throw new Error(`[${VERSION}] ไม่สามารถอ่านไฟล์ Prompt ได้ กรุณาตรวจสอบว่ามีโฟลเดอร์ prompts ในโปรเจกต์หรือไม่`);
+    }
+
+    let targetPrompt = targetPromptFile;
     for (const [key, value] of Object.entries(variables)) {
         targetPrompt = targetPrompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
     }
@@ -46,33 +50,37 @@ export async function generateLanguageContent(promptName: string, variables: Rec
 
     for (const modelName of modelsToTry) {
         try {
-            console.log(`[${VERSION}] Trying ${modelName}...`);
-            const model = genAI.getGenerativeModel({ model: modelName });
+            console.log(`[${VERSION}] Trying ${modelName} with API v1...`);
 
-            // This is a server-side call
+            // FORCING v1 API which is the stable production version
+            const model = genAI.getGenerativeModel(
+                { model: modelName },
+                { apiVersion: 'v1' }
+            );
+
             const result = await model.generateContent(combinedPrompt);
             const response = await result.response;
-            let text = response.text();
+            const text = response.text();
 
-            if (text.includes('```json')) {
-                text = text.split('```json')[1].split('```')[0];
-            } else if (text.includes('```')) {
-                text = text.split('```')[1].split('```')[0];
+            let cleanJson = text;
+            if (cleanJson.includes('```json')) {
+                cleanJson = cleanJson.split('```json')[1].split('```')[0];
+            } else if (cleanJson.includes('```')) {
+                cleanJson = cleanJson.split('```')[1].split('```')[0];
             }
 
-            return JSON.parse(text.trim());
+            return JSON.parse(cleanJson.trim());
 
         } catch (error: any) {
-            console.error(`[${VERSION}] ${modelName} failed:`, error.message);
+            console.error(`[${VERSION}] ${modelName} Error:`, error.message);
             lastError = error;
 
-            // If it's not a 404, the issue might be Auth/Quota, so we report and stop
+            // If it's a 404, we continue. If it's 401/429, we stop.
             if (!error.message.includes('404') && !error.message.includes('not found')) {
                 break;
             }
-            continue;
         }
     }
 
-    throw new Error(`[${VERSION}] AI 404: ไม่มีรุ่นไหนใช้งานได้เลย. โปรดตรวจสอบว่า API Key ของคุณเป็นชนิด "Google AI Studio API Key" และลองสร้าง Key ใหม่ในโปรเจกต์ใหม่ครับ`);
+    throw new Error(`[${VERSION}] AI 404: ไม่พบรุ่นที่รองรับ. สาเหตุส่วนใหญ่คือ API Key ไม่ถูกต้อง หรือภูมิภาคเซิร์ฟเวอร์ยังไม่เปิดให้ใช้รุ่นนี้. ข้อความจาก Google: ${lastError?.message}`);
 }
