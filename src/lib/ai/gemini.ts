@@ -16,7 +16,7 @@ export async function getPrompt(filename: string) {
 }
 
 export async function generateLanguageContent(promptName: string, variables: Record<string, string>) {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const systemPrompt = await getPrompt('00_system_core.txt');
     let targetPrompt = await getPrompt(promptName);
