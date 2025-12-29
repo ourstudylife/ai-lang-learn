@@ -16,7 +16,9 @@ export async function getPrompt(filename: string) {
 }
 
 export async function generateLanguageContent(promptName: string, variables: Record<string, string>) {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    // Try multiple model variants in case one is not found in the current region/API version
+    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro"];
+    let lastError = null;
 
     const systemPrompt = await getPrompt('00_system_core.txt');
     let targetPrompt = await getPrompt(promptName);
@@ -28,16 +30,32 @@ export async function generateLanguageContent(promptName: string, variables: Rec
 
     const combinedPrompt = `${systemPrompt}\n\n${targetPrompt}`;
 
-    const result = await model.generateContent(combinedPrompt);
-    const response = await result.response;
-    let text = response.text();
+    for (const modelName of modelsToTry) {
+        try {
+            console.log(`Attempting to use model: ${modelName}`);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(combinedPrompt);
+            const response = await result.response;
+            let text = response.text();
 
-    // Clean up JSON if AI includes markdown code blocks
-    if (text.startsWith('```json')) {
-        text = text.replace(/```json\n?/, '').replace(/\n?```/, '');
-    } else if (text.startsWith('```')) {
-        text = text.replace(/```\n?/, '').replace(/\n?```/, '');
+            // Clean up JSON if AI includes markdown code blocks
+            if (text.startsWith('```json')) {
+                text = text.replace(/```json\n?/, '').replace(/\n?```/, '');
+            } else if (text.startsWith('```')) {
+                text = text.replace(/```\n?/, '').replace(/\n?```/, '');
+            }
+
+            return JSON.parse(text);
+        } catch (error: any) {
+            console.error(`Error with model ${modelName}:`, error.message);
+            lastError = error;
+            // If it's a 404, we try the next model. Otherwise, it might be a quota/auth issue, so we stop.
+            if (!error.message.includes('404') && !error.message.includes('not found')) {
+                break;
+            }
+            continue;
+        }
     }
 
-    return JSON.parse(text);
+    throw lastError || new Error("Failed to generate content with any available model");
 }
