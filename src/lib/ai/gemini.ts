@@ -15,7 +15,7 @@ export async function getPrompt(filename: string) {
     }
 }
 
-const VERSION = "V1.0.7-ULTIMATE";
+const VERSION = "V1.0.8-STABLE";
 
 export async function generateLanguageContent(promptName: string, variables: Record<string, string>) {
     const apiKey = process.env.GEMINI_API_KEY;

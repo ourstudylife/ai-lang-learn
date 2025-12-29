@@ -4,30 +4,31 @@ export default function Home() {
   return (
     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {/* Hero Section */}
-      <section style={{ 
-        width: '100%', 
-        padding: '120px 20px', 
+      <section style={{
+        width: '100%',
+        padding: '120px 20px',
         textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '24px'
       }} className="animate-fade-in">
-        <div className="glass" style={{ padding: '8px 20px', marginBottom: '20px', fontSize: '14px', fontWeight: '500' }}>
-          🚀 ยกระดับการเรียนภาษาด้วย AI
+        <div className="glass" style={{ padding: '8px 20px', marginBottom: '20px', fontSize: '14px', fontWeight: '500', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span>🚀 ยกระดับการเรียนภาษาด้วย AI</span>
+          <span style={{ fontSize: '10px', opacity: 0.5 }}>[BUILD: V1.0.8]</span>
         </div>
         <h1 style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', fontWeight: '700', lineHeight: '1.1' }}>
           <span className="title-gradient">AI Language learning</span><br />
           เพื่อคนไทยยุคใหม่
         </h1>
-        <p style={{ 
-          fontSize: '1.2rem', 
-          color: 'rgba(255, 255, 255, 0.7)', 
-          maxWidth: '600px', 
+        <p style={{
+          fontSize: '1.2rem',
+          color: 'rgba(255, 255, 255, 0.7)',
+          maxWidth: '600px',
           lineHeight: '1.6',
           margin: '10px 0 30px 0'
         }}>
-          เรียนรู้ภาษาเป้าหมายอย่างเป็นธรรมชาติ ด้วยเทคโนโลยี AI ที่ปรับแต่งบทเรียนให้เข้ากับคุณโดยเฉพาะ 
+          เรียนรู้ภาษาเป้าหมายอย่างเป็นธรรมชาติ ด้วยเทคโนโลยี AI ที่ปรับแต่งบทเรียนให้เข้ากับคุณโดยเฉพาะ
           ไม่ว่าจะเป็น อาหรับ, ญี่ปุ่น, จีน หรือภาษาอื่นๆ
         </p>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -36,10 +37,10 @@ export default function Home() {
               เริ่มเรียนฟรีตอนนี้
             </button>
           </Link>
-          <button className="glass" style={{ 
-            padding: '12px 24px', 
-            fontSize: '1.1rem', 
-            fontWeight: '600', 
+          <button className="glass" style={{
+            padding: '12px 24px',
+            fontSize: '1.1rem',
+            fontWeight: '600',
             color: 'white',
             cursor: 'pointer'
           }}>
@@ -49,9 +50,9 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section style={{ 
-        width: '100%', 
-        maxWidth: '1000px', 
+      <section style={{
+        width: '100%',
+        maxWidth: '1000px',
         padding: '60px 20px',
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
