@@ -17,57 +17,57 @@ export async function getPrompt(filename: string) {
 
 export async function generateLanguageContent(promptName: string, variables: Record<string, string>) {
     if (!process.env.GEMINI_API_KEY) {
-        throw new Error("ไม่พบ GEMINI_API_KEY ใน Environment Variables ของ Vercel กรุณาตรวจสอบการตั้งค่า");
+        throw new Error("ไม่พบ GEMINI_API_KEY กรุณาตั้งค่าใน Vercel Environment Variables");
     }
 
-    // List of models ordered from most efficient to most powerful
-    const modelsToTry = [
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-001",
-        "gemini-1.5-flash-002",
-        "gemini-1.5-pro-latest",
-        "gemini-1.0-pro"
-    ];
+    // Use a single, most stable model for now to avoid timeout on fallbacks
+    // and explicitly set apiVersion to 'v1'
+    const modelName = "gemini-1.5-flash";
 
-    let lastError = null;
+    try {
+        console.log(`🚀 Requesting Google AI with model: ${modelName}`);
 
-    const systemPrompt = await getPrompt('00_system_core.txt');
-    let targetPrompt = await getPrompt(promptName);
+        // Explicitly use v1 API which is more stable than v1beta
+        const model = genAI.getGenerativeModel(
+            { model: modelName },
+            { apiVersion: 'v1' }
+        );
 
-    for (const [key, value] of Object.entries(variables)) {
-        targetPrompt = targetPrompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
-    }
+        const systemPrompt = await getPrompt('00_system_core.txt');
+        let targetPrompt = await getPrompt(promptName);
 
-    const combinedPrompt = `${systemPrompt}\n\n${targetPrompt}`;
-
-    for (const modelName of modelsToTry) {
-        try {
-            console.log(`🚀 Attempting model: ${modelName}`);
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent(combinedPrompt);
-            const response = await result.response;
-            let text = response.text();
-
-            if (text.startsWith('```json')) {
-                text = text.replace(/```json\n?/, '').replace(/\n?```/, '');
-            } else if (text.startsWith('```')) {
-                text = text.replace(/```\n?/, '').replace(/\n?```/, '');
-            }
-
-            return JSON.parse(text);
-        } catch (error: any) {
-            console.error(`❌ Model ${modelName} failed:`, error.message);
-            lastError = error;
-
-            // Only continue if it's a 404/Not Found. 
-            // If it's 429 (Quota) or 401 (Auth), we should stop and report it.
-            if (error.message.includes('404') || error.message.includes('not found')) {
-                continue;
-            }
-            break;
+        for (const [key, value] of Object.entries(variables)) {
+            targetPrompt = targetPrompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
         }
-    }
 
-    throw new Error(`AI ไม่พร้อมใช้งานชั่วคราว: ${lastError?.message || "กรุณาลองใหม่ภายหลัง"}`);
+        const combinedPrompt = `${systemPrompt}\n\n${targetPrompt}`;
+
+        const result = await model.generateContent(combinedPrompt);
+        const response = await result.response;
+        let text = response.text();
+
+        // Clean up JSON formatting
+        if (text.includes('```json')) {
+            text = text.split('```json')[1].split('```')[0];
+        } else if (text.includes('```')) {
+            text = text.split('```')[1].split('```')[0];
+        }
+
+        return JSON.parse(text.trim());
+
+    } catch (error: any) {
+        console.error(`❌ AI Generation Error:`, error);
+
+        let errorMessage = error.message || "เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI";
+
+        if (errorMessage.includes('404')) {
+            errorMessage = `ไม่พบโมเดล ${modelName} (404). กรุณาตรวจสอบว่า API Key ของคุณเปิดใช้งานโปรเจกต์ Gemini 1.5 แล้ว`;
+        } else if (errorMessage.includes('429')) {
+            errorMessage = "โควต้า API เต็มแล้ว กรุณารอสักครู่แล้วลองใหม่";
+        } else if (errorMessage.includes('API key not valid')) {
+            errorMessage = "API Key ไม่ถูกต้อง กรุณาตรวจสอบการตั้งค่าใน Vercel";
+        }
+
+        throw new Error(errorMessage);
+    }
 }
