@@ -88,8 +88,8 @@ export default function LessonView({ params }: { params: { type: string } }) {
                     <Link href="/lessons">
                         <button className="glass" style={{ padding: '8px 16px', color: 'white', fontSize: '0.9rem' }}>← กลับ</button>
                     </Link>
-                    <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.5)' }}>
-                        บทเรียน: {type} | ภาษา: {lang}
+                    <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.5)', textAlign: 'right' }}>
+                        <div>บทเรียน: {type} | ภาษา: {lang} / V1.0.7</div>
                     </div>
                 </div>
 
